@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aws-ssm-juggle"
-version = "24.4.0"
+version = "24.4.1"
 description = "AWS SSM tool"
 authors = ["Stefan Heitmüller <stefan.heitmueller@gmx.com>"]
 readme = "README.md"

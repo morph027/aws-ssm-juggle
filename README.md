@@ -28,7 +28,7 @@ Use [ecs-exec-checker](https://github.com/aws-containers/amazon-ecs-exec-checker
 
 ## ecs-juggle
 
-Inspired by [ecsgo](https://github.com/tedsmitt/ecsgo) (`ecspy` is in use already).
+Inspired by [ecsgo](https://github.com/tedsmitt/ecsgo).
 
 Provides a tool to interact with AWS ECS tasks.
 
@@ -63,5 +63,47 @@ ecs-juggle forward
 Specify port and select the rest from menu:
 
 ```bash
-ecs-juggle --remote-port 8080 forward
+ecs-juggle forward --remote-port 8080
+```
+
+## ec2-juggle
+
+Inspired by [gossm](https://github.com/gjbae1212/gossm/).
+
+Provides a tool to interact with AWS EC2 instances.
+
+Currently provides:
+
+* interactive shell (e.g. shell)
+* ssh shell
+* port-forwarding
+
+### Usage
+
+See `ec2-juggle --help` for all features.
+
+#### Start session
+
+```bash
+ec2-juggle start
+```
+
+#### Start ssh session
+
+Default:
+
+```bash
+ec2-juggle ssh
+```
+
+With extra arguments:
+
+```bash
+ec2-juggle ssh --ssh-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ubuntu"
+```
+
+#### Port forwarding
+
+```bash
+ecs-juggle forward --remote-port 80
 ```
