@@ -8,7 +8,7 @@ import shtab
 from boto3 import session
 from botocore import exceptions
 
-from aws_ssm_juggle import show_menu, port_forward
+from aws_ssm_juggle import port_forward, show_menu
 
 
 class EC2Session:
@@ -50,9 +50,9 @@ class EC2Session:
         args = [
             "session-manager-plugin",
             json.dumps(session_response),
-            self.ssm.region_name,
+            self.boto3_session.region_name,
             "StartSession",
-            self.ssm.profile_name,
+            self.boto3_session.profile_name,
             json.dumps(session_parameters),
         ]
         os.execvp(
@@ -78,7 +78,7 @@ class EC2Session:
             "TokenValue": ssm_start_session.get("TokenValue"),
             "StreamUrl": ssm_start_session.get("StreamUrl"),
         }
-        proxy_command = f"ProxyCommand=session-manager-plugin '{json.dumps(session_response)}' {self.ssm.region_name} StartSession {self.ssm.profile_name} '{json.dumps(session_parameters)}'"
+        proxy_command = f"ProxyCommand=session-manager-plugin '{json.dumps(session_response)}' {self.boto3_session.region_name} StartSession {self.boto3_session.profile_name} '{json.dumps(session_parameters)}'"
         args = ["ssh"]
         if self.ssh_args:
             args.extend(self.ssh_args.split(" "))
@@ -86,7 +86,7 @@ class EC2Session:
             [
                 "-o",
                 proxy_command,
-                f"{self.instance_id}.{self.ssm.region_name}.compute.internal",
+                f"{self.instance_id}.{self.boto3_session.region_name}.compute.internal",
             ]
         )
         os.execvp(
@@ -101,7 +101,6 @@ class EC2Session:
             local_port=self.local_port,
             target=self.target,
         )
-
 
 
 def get_parser():

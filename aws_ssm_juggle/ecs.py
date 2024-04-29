@@ -11,7 +11,7 @@ import shtab
 from boto3 import session
 from botocore import exceptions
 
-from aws_ssm_juggle import show_menu, port_forward
+from aws_ssm_juggle import port_forward, show_menu
 
 
 class ECSSession:
@@ -45,11 +45,8 @@ class ECSSession:
         self.ssm = self.boto3_session.client("ssm")
         self.task = task
         self.task_details = task_details
-        self.runtime_id = (
-            task_details.get("tasks")[0].get("containers")[container_index].get("runtimeId")
-        )
+        self.runtime_id = task_details.get("tasks")[0].get("containers")[container_index].get("runtimeId")
         self.target = f"ecs:{self.cluster}_{self.runtime_id.split('-')[0]}_{self.runtime_id}"
-
 
     def port_forward(self):
         port_forward(
@@ -58,7 +55,6 @@ class ECSSession:
             local_port=self.local_port,
             target=self.target,
         )
-
 
     def execute_command(self):
         """
@@ -78,9 +74,9 @@ class ECSSession:
         args = [
             "session-manager-plugin",
             json.dumps(ecs_execute_command_session),
-            self.ssm.region_name,
+            self.boto3_session.region_name,
             "StartSession",
-            self.ssm.profile_name,
+            self.boto3_session.profile_name,
             json.dumps(
                 {"Target": self.target},
             ),
@@ -233,9 +229,7 @@ def get_task(ecs: session.Session.client, task: str, cluster: str, service: str)
     return (cluster, service, *ret)
 
 
-def get_container(
-    cluster: str, service: str, task: str, containers: list, container: str
-):
+def get_container(cluster: str, service: str, task: str, containers: list, container: str):
     """
     get container
     """
@@ -273,9 +267,7 @@ def get_port(
     return (container, *ret)
 
 
-def menu_loop_condition(
-    cluster: str, service: str, task: str, container: str, remote_port: int, action: str
-):
+def menu_loop_condition(cluster: str, service: str, task: str, container: str, remote_port: int, action: str):
     menu_loop_condition = cluster and service and task and container
     if action == "forward":
         menu_loop_condition = menu_loop_condition and remote_port
@@ -317,15 +309,10 @@ def run():
     ):
         cluster, _ = get_cluster(ecs=ecs, cluster=cluster)
         cluster, service, _ = get_service(ecs=ecs, cluster=cluster, service=service)
-        cluster, service, task, _ = get_task(
-            ecs=ecs, cluster=cluster, service=service, task=task
-        )
+        cluster, service, task, _ = get_task(ecs=ecs, cluster=cluster, service=service, task=task)
         if cluster and task:
             task_details = ecs.describe_tasks(cluster=cluster, tasks=[task])
-            containers = [
-                container.get("name")
-                for container in task_details.get("tasks")[0].get("containers")
-            ]
+            containers = [container.get("name") for container in task_details.get("tasks")[0].get("containers")]
             # task, container, container_index = get_container(
             ret = get_container(
                 cluster=cluster,
@@ -337,14 +324,12 @@ def run():
             task, container, container_index = ret
         if (arguments.action == "forward" and container) and not remote_port:
             task_definition_arn = task_details.get("tasks")[0].get("taskDefinitionArn")
-            task_definition = task_definition or ecs.describe_task_definition(
-                taskDefinition=task_definition_arn
-            ).get("taskDefinition")
+            task_definition = task_definition or ecs.describe_task_definition(taskDefinition=task_definition_arn).get(
+                "taskDefinition"
+            )
             ports = [
                 str(container.get("containerPort"))
-                for container in task_definition.get("containerDefinitions")[
-                    container_index
-                ].get("portMappings")
+                for container in task_definition.get("containerDefinitions")[container_index].get("portMappings")
             ]
             container, remote_port, _ = get_port(
                 cluster=cluster,
