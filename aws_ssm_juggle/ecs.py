@@ -46,6 +46,8 @@ class ECSSession:
         self.task = task
         self.task_details = task_details
         self.runtime_id = task_details.get("tasks")[0].get("containers")[container_index].get("runtimeId")
+        if not self.runtime_id:
+            raise RuntimeError("unable to get runtimeId from container, looks like it's not running.")
         self.target = f"ecs:{self.cluster}_{self.runtime_id.split('-')[0]}_{self.runtime_id}"
 
     def port_forward(self):
@@ -313,7 +315,6 @@ def run():
         if cluster and task:
             task_details = ecs.describe_tasks(cluster=cluster, tasks=[task])
             containers = [container.get("name") for container in task_details.get("tasks")[0].get("containers")]
-            # task, container, container_index = get_container(
             ret = get_container(
                 cluster=cluster,
                 service=service,
