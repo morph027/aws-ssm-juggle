@@ -176,9 +176,10 @@ def get_instance_id(boto3_session: session.Session, instance_id: str):
         leaf="Reservations",
     )
     instances = []
-    for instance in reservations[0].get("Instances"):
-        tags = {tag["Key"]: tag["Value"] for tag in instance.get("Tags", [])}
-        instances.append(f'{instance.get("InstanceId")} - {tags.get("Name")}')
+    for reservation in reservations:
+        for instance in reservation.get("Instances"):
+            tags = {tag["Key"]: tag["Value"] for tag in instance.get("Tags", [])}
+            instances.append(f'{instance.get("InstanceId")} - {tags.get("Name")}')
     return show_menu(
         items=instances,
         title="Select instance id",
