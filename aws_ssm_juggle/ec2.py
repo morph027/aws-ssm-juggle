@@ -170,10 +170,19 @@ def get_instance_id(boto3_session: session.Session, instance_id: str):
     """
     if instance_id:
         return instance_id, None
+    print("fetching available instances...")
     reservations = ec2_paginator(
         boto3_session=boto3_session,
         paginator="describe_instances",
         leaf="Reservations",
+        Filters=[
+            {
+                "Name": "instance-state-name",
+                "Values": [
+                    "running",
+                ],
+            },
+        ],
     )
     instances = []
     for reservation in reservations:

@@ -169,6 +169,7 @@ def get_cluster(ecs: session.Session.client, cluster: str):
     """
     if cluster:
         return cluster, None
+    print("fetching available clusters...")
     arns = ecs_paginator(
         ecs=ecs,
         paginator="list_clusters",
@@ -179,6 +180,7 @@ def get_cluster(ecs: session.Session.client, cluster: str):
         items=clusters,
         title="Select cluster",
         back=False,
+        clear_screen=True,
     )
 
 
@@ -190,6 +192,7 @@ def get_service(ecs: session.Session.client, service: str, cluster: str):
         return cluster, None, None
     if service:
         return cluster, service, None
+    print("fetching available services...")
     arns = ecs_paginator(
         ecs=ecs,
         paginator="list_services",
@@ -199,7 +202,8 @@ def get_service(ecs: session.Session.client, service: str, cluster: str):
     services = [service.split("/")[-1] for service in arns]
     ret = show_menu(
         items=services,
-        title=f"[{cluster}] Select service",
+        title=f"[{cluster}]\nSelect service",
+        clear_screen=True,
     )
     if ret[0] is None:
         return (None, *ret)
@@ -214,6 +218,7 @@ def get_task(ecs: session.Session.client, task: str, cluster: str, service: str)
         return cluster, service, None, None
     if task:
         return cluster, service, task, None
+    print("fetching available tasks...")
     arns = ecs_paginator(
         ecs=ecs,
         paginator="list_tasks",
@@ -224,7 +229,8 @@ def get_task(ecs: session.Session.client, task: str, cluster: str, service: str)
     tasks = [task.split("/")[-1] for task in arns]
     ret = show_menu(
         items=tasks,
-        title=f"[{cluster}|{service}] Select task",
+        title=f"[{cluster}|{service}]\nSelect task",
+        clear_screen=True,
     )
     if ret[0] is None:
         return (cluster, None, *ret)
@@ -239,7 +245,8 @@ def get_container(cluster: str, service: str, task: str, containers: list, conta
         return task, container, containers.index(container)
     ret = show_menu(
         items=containers,
-        title=f"[{cluster}|{service}|{task}] Select container",
+        title=f"[{cluster}|{service}|{task}]\nSelect container",
+        clear_screen=True,
     )
     if ret[0] is None:
         return (None, *ret)
@@ -262,7 +269,8 @@ def get_port(
         return None, port, None
     ret = show_menu(
         items=ports,
-        title=f"[{cluster}|{service}|{task}|{container}] Select port",
+        title=f"[{cluster}|{service}|{task}|{container}]\nSelect port",
+        clear_screen=True,
     )
     if ret[0] is None:
         return (None, *ret)

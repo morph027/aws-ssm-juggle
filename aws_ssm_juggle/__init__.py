@@ -6,7 +6,13 @@ from botocore import exceptions
 from simple_term_menu import TerminalMenu
 
 
-def show_menu(items: list, title: str, source: list = None, back: bool = True):
+def show_menu(
+    items: list,
+    title: str,
+    source: list = None,
+    back: bool = True,
+    clear_screen: bool = False,
+):
     """
     menu function
     """
@@ -18,6 +24,7 @@ def show_menu(items: list, title: str, source: list = None, back: bool = True):
         items,
         title=f'? {title} (Press "q"/"ESC" to quit):\n',
         show_search_hint=True,
+        clear_screen=clear_screen,
     )
     index = menu.show()
     if index is None:
