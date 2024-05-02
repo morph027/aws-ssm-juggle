@@ -112,9 +112,14 @@ def get_parser():
     shtab.add_argument_to(
         parser,
         ["--print-completion"],
-        help="Print shell-completion. Run '. <(ecs-session --print-completion)' to load.",
+        help="Print shell-completion. Run '. <(ecs-juggle --print-completion bash)' to load.",
     )
-    parser.add_argument("--profile", help="AWS Profile", default="default")
+    parser.add_argument(
+        "--profile",
+        help="AWS Profile",
+        default="default",
+        choices=session.Session().available_profiles,
+    )
     parser.add_argument(
         "--region",
         help="AWS region name",

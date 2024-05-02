@@ -12,7 +12,7 @@ def show_menu(
     source: list = None,
     back: bool = True,
     clear_screen: bool = False,
-):
+) -> tuple:
     """
     menu function
     """
@@ -34,7 +34,7 @@ def show_menu(
     return source[index], index
 
 
-def port_forward(boto3_session: session.Session, remote_port: int, local_port: int, target: str):
+def port_forward(boto3_session: session.Session, remote_port: int, local_port: int, target: str) -> None:
     """
     forward port
     """
