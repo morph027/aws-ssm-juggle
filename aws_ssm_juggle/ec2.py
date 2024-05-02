@@ -112,7 +112,7 @@ def get_parser():
     shtab.add_argument_to(
         parser,
         ["--print-completion"],
-        help="Print shell-completion. Run '. <(ecs-juggle --print-completion bash)' to load.",
+        help="Print shell-completion. Run '. <(ec2-juggle --print-completion bash)' to load.",
     )
     parser.add_argument(
         "--profile",
