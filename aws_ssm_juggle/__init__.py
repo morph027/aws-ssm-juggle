@@ -3,7 +3,10 @@ import os
 
 from boto3 import session
 from botocore import exceptions
+from diskcache import Cache
 from simple_term_menu import TerminalMenu
+
+cache = Cache("/tmp/_aws-ssm-juggle_cache")
 
 
 def show_menu(
@@ -83,3 +86,8 @@ def port_forward(boto3_session: session.Session, remote_port: int, local_port: i
         )
     except FileNotFoundError:
         print("session-manager-plugin missing!")
+
+
+@cache.memoize(expire=600)
+def get_boto3_profiles() -> list:
+    return session.Session().available_profiles

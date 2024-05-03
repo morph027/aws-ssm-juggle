@@ -11,7 +11,7 @@ import shtab
 from boto3 import session
 from botocore import exceptions
 
-from aws_ssm_juggle import port_forward, show_menu
+from aws_ssm_juggle import get_boto3_profiles, port_forward, show_menu
 
 
 class ECSSession:
@@ -107,7 +107,7 @@ def get_parser():
         "--profile",
         help="AWS Profile",
         default="default",
-        choices=session.Session().available_profiles,
+        choices=get_boto3_profiles(),
     )
     parser.add_argument(
         "--region",
