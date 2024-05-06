@@ -187,12 +187,7 @@ def get_instance_id(boto3_session: session.Session, instance_id: str, instance_n
         },
     ]
     if instance_name:
-        filters.append(
-            {
-                "Name": "tag:Name",
-                "Values": [f"*{instance_name}*"]
-            }
-        )
+        filters.append({"Name": "tag:Name", "Values": [f"*{instance_name}*"]})
     reservations = ec2_paginator(
         boto3_session=boto3_session,
         paginator="describe_instances",
