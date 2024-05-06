@@ -129,6 +129,10 @@ def get_parser():
         "--instance-id",
         help="EC2 instance id",
     )
+    parser.add_argument(
+        "--instance-name",
+        help="Show only EC2 instances where name matches (e.g. 'web' matches 'my-app-web-server')",
+    )
     subparsers = parser.add_subparsers(
         dest="action",
         help="action",
@@ -169,25 +173,31 @@ def ec2_paginator(boto3_session: session.Session, paginator: str, leaf: str, **k
     return res
 
 
-def get_instance_id(boto3_session: session.Session, instance_id: str):
+def get_instance_id(boto3_session: session.Session, instance_id: str, instance_name: str = ""):
     """
     get instance_id
     """
     if instance_id:
         return instance_id, None
     print("fetching available instances...")
+    filters = [
+        {
+            "Name": "instance-state-name",
+            "Values": ["running"],
+        },
+    ]
+    if instance_name:
+        filters.append(
+            {
+                "Name": "tag:Name",
+                "Values": [f"*{instance_name}*"]
+            }
+        )
     reservations = ec2_paginator(
         boto3_session=boto3_session,
         paginator="describe_instances",
         leaf="Reservations",
-        Filters=[
-            {
-                "Name": "instance-state-name",
-                "Values": [
-                    "running",
-                ],
-            },
-        ],
+        Filters=filters,
     )
     instances = []
     for reservation in reservations:
@@ -210,6 +220,7 @@ def run():
         "profile_name": arguments.profile,
     }
     boto3_session = session.Session(**boto3_session_args)
+    instance_name = arguments.instance_name
     instance_id = arguments.instance_id
     ssh_args, remote_port, local_port = None, None, None
     if "ssh_args" in arguments:
@@ -219,7 +230,11 @@ def run():
     if "local_port" in arguments:
         local_port = arguments.local_port
     while not instance_id:
-        instance_id, _ = get_instance_id(boto3_session=boto3_session, instance_id=instance_id)
+        instance_id, _ = get_instance_id(
+            boto3_session=boto3_session,
+            instance_id=instance_id,
+            instance_name=instance_name,
+        )
         instance_id = instance_id.split(" - ")[0]
     ec2_session = EC2Session(
         boto3_session=boto3_session,

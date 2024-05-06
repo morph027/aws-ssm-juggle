@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "aws-ssm-juggle"
-version = "24.5.2"
+version = "24.5.3"
 description = "AWS SSM tool for ECS/EC2 (Shell, Port Forwarding, ...)"
 authors = ["Stefan Heitmüller <stefan.heitmueller@gmx.com>"]
 readme = "README.md"
