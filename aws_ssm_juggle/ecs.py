@@ -314,65 +314,69 @@ def run():
         remote_port,
         None,
     )
-    while not menu_loop_condition(
-        cluster=cluster,
-        service=service,
-        task=task,
-        container=container,
-        remote_port=remote_port,
-        action=arguments.action,
-    ):
-        cluster, _ = get_cluster(ecs=ecs, cluster=cluster)
-        cluster, service, _ = get_service(ecs=ecs, cluster=cluster, service=service)
-        cluster, service, task, _ = get_task(ecs=ecs, cluster=cluster, service=service, task=task)
-        if cluster and task:
-            task_details = ecs.describe_tasks(cluster=cluster, tasks=[task])
-            containers = [container.get("name") for container in task_details.get("tasks")[0].get("containers")]
-            ret = get_container(
-                cluster=cluster,
-                service=service,
-                task=task,
-                containers=containers,
-                container=container,
-            )
-            task, container, container_index = ret
-        if (arguments.action == "forward" and container) and not remote_port:
-            task_definition_arn = task_details.get("tasks")[0].get("taskDefinitionArn")
-            task_definition = task_definition or ecs.describe_task_definition(taskDefinition=task_definition_arn).get(
-                "taskDefinition"
-            )
-            ports = [
-                str(container.get("containerPort"))
-                for container in task_definition.get("containerDefinitions")[container_index].get("portMappings")
-            ]
-            container, remote_port, _ = get_port(
-                cluster=cluster,
-                service=service,
-                task=task,
-                container=container,
-                containers=containers,
-                ports=ports,
-                port=remote_port,
-            )
-    ecs_session = ECSSession(
-        cluster=cluster,
-        boto3_session=boto3_session,
-        command=command,
-        container=container,
-        container_index=container_index,
-        local_port=local_port,
-        remote_port=remote_port,
-        task=task,
-        task_details=task_details,
-    )
-    function = {
-        "forward": ecs_session.port_forward,
-        "command": ecs_session.execute_command,
-    }
-    print("---")
-    print(f"cluster: {cluster}")
-    print(f"service: {service}")
-    print(f"task: {task}")
-    print(f"container: {container}")
-    print("---")
-    function.get(arguments.action)()
+    try:
+        while not menu_loop_condition(
+            cluster=cluster,
+            service=service,
+            task=task,
+            container=container,
+            remote_port=remote_port,
+            action=arguments.action,
+        ):
+            cluster, _ = get_cluster(ecs=ecs, cluster=cluster)
+            cluster, service, _ = get_service(ecs=ecs, cluster=cluster, service=service)
+            cluster, service, task, _ = get_task(ecs=ecs, cluster=cluster, service=service, task=task)
+            if cluster and task:
+                task_details = ecs.describe_tasks(cluster=cluster, tasks=[task])
+                containers = [container.get("name") for container in task_details.get("tasks")[0].get("containers")]
+                ret = get_container(
+                    cluster=cluster,
+                    service=service,
+                    task=task,
+                    containers=containers,
+                    container=container,
+                )
+                task, container, container_index = ret
+            if (arguments.action == "forward" and container) and not remote_port:
+                task_definition_arn = task_details.get("tasks")[0].get("taskDefinitionArn")
+                task_definition = task_definition or ecs.describe_task_definition(taskDefinition=task_definition_arn).get(
+                    "taskDefinition"
+                )
+                ports = [
+                    str(container.get("containerPort"))
+                    for container in task_definition.get("containerDefinitions")[container_index].get("portMappings")
+                ]
+                container, remote_port, _ = get_port(
+                    cluster=cluster,
+                    service=service,
+                    task=task,
+                    container=container,
+                    containers=containers,
+                    ports=ports,
+                    port=remote_port,
+                )
+        ecs_session = ECSSession(
+            cluster=cluster,
+            boto3_session=boto3_session,
+            command=command,
+            container=container,
+            container_index=container_index,
+            local_port=local_port,
+            remote_port=remote_port,
+            task=task,
+            task_details=task_details,
+        )
+        function = {
+            "forward": ecs_session.port_forward,
+            "command": ecs_session.execute_command,
+        }
+        print("---")
+        print(f"cluster: {cluster}")
+        print(f"service: {service}")
+        print(f"task: {task}")
+        print(f"container: {container}")
+        print("---")
+        function.get(arguments.action)()
+    except exceptions.ClientError as err:
+        print(err)
+        exit(1)

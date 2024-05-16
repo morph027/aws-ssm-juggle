@@ -224,23 +224,27 @@ def run():
         remote_port = arguments.remote_port
     if "local_port" in arguments:
         local_port = arguments.local_port
-    while not instance_id:
-        instance_id, _ = get_instance_id(
+    try:
+        while not instance_id:
+            instance_id, _ = get_instance_id(
+                boto3_session=boto3_session,
+                instance_id=instance_id,
+                instance_name=instance_name,
+            )
+            instance_id = instance_id.split(" - ")[0]
+        ec2_session = EC2Session(
             boto3_session=boto3_session,
             instance_id=instance_id,
-            instance_name=instance_name,
+            local_port=local_port,
+            remote_port=remote_port,
+            ssh_args=ssh_args,
         )
-        instance_id = instance_id.split(" - ")[0]
-    ec2_session = EC2Session(
-        boto3_session=boto3_session,
-        instance_id=instance_id,
-        local_port=local_port,
-        remote_port=remote_port,
-        ssh_args=ssh_args,
-    )
-    function = {
-        "start": ec2_session.start,
-        "ssh": ec2_session.ssh,
-        "forward": ec2_session.port_forward,
-    }
-    function.get(arguments.action)()
+        function = {
+            "start": ec2_session.start,
+            "ssh": ec2_session.ssh,
+            "forward": ec2_session.port_forward,
+        }
+        function.get(arguments.action)()
+    except exceptions.ClientError as err:
+        print(err)
+        exit(1)
