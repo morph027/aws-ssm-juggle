@@ -339,9 +339,9 @@ def run():
                 task, container, container_index = ret
             if (arguments.action == "forward" and container) and not remote_port:
                 task_definition_arn = task_details.get("tasks")[0].get("taskDefinitionArn")
-                task_definition = task_definition or ecs.describe_task_definition(taskDefinition=task_definition_arn).get(
-                    "taskDefinition"
-                )
+                task_definition = task_definition or ecs.describe_task_definition(
+                    taskDefinition=task_definition_arn
+                ).get("taskDefinition")
                 ports = [
                     str(container.get("containerPort"))
                     for container in task_definition.get("containerDefinitions")[container_index].get("portMappings")
