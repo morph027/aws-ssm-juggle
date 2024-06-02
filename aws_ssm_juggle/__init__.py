@@ -4,9 +4,11 @@ import os
 from boto3 import session
 from botocore import exceptions
 from diskcache import Cache
-from simple_term_menu import TerminalMenu
+from InquirerPy import inquirer
+from InquirerPy.base import Choice
+from tempfile import gettempdir
 
-cache = Cache("/tmp/_aws-ssm-juggle_cache")
+cache = Cache(f"/{gettempdir()}/_aws-ssm-juggle_cache")
 
 
 def show_menu(
@@ -19,25 +21,29 @@ def show_menu(
     """
     menu function
     """
-    index = None
+    if clear_screen:
+        print("\033c", end="", flush=True)
     source = source or items
+    indices = dict(zip(source, list(range(0, len(source)))))
     if back:
-        items = items + ["Back"]
-    menu = TerminalMenu(
-        items,
-        title=f'? {title} (Press "q"/"ESC" to quit):\n',
-        show_search_hint=True,
-        clear_screen=clear_screen,
-    )
-    index = menu.show()
-    if index is None:
+        items.append(Choice(value=None, name="Back"))
+    try:
+        selection = inquirer.fuzzy(
+            message=title,
+            long_instruction='Type to search - Press "ESC" to quit',
+            choices=items,
+            keybindings={"interrupt": [{"key": "escape"}]},
+        ).execute()
+    except KeyboardInterrupt:
         exit(0)
-    if items[index] == "Back":
-        return None, index
-    return source[index], index
+    if selection is None:
+        return None, len(source)
+    return selection, indices[selection]
 
 
-def port_forward(boto3_session: session.Session, remote_port: int, local_port: int, target: str) -> None:
+def port_forward(
+    boto3_session: session.Session, remote_port: int, local_port: int, target: str
+) -> None:
     """
     forward port
     """
