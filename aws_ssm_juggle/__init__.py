@@ -8,7 +8,7 @@ from InquirerPy import inquirer
 from InquirerPy.base import Choice
 from tempfile import gettempdir
 
-cache = Cache(f"/{gettempdir()}/_aws-ssm-juggle_cache")
+cache = Cache(os.path.join(gettempdir(), "_aws-ssm-juggle_cache"))
 
 
 def show_menu(
