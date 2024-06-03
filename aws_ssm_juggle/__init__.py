@@ -1,5 +1,9 @@
 import json
 import os
+import signal
+import sys
+from contextlib import contextmanager
+from subprocess import check_call
 from tempfile import gettempdir
 
 from boto3 import session
@@ -9,6 +13,28 @@ from InquirerPy import inquirer
 from InquirerPy.base import Choice
 
 cache = Cache(os.path.join(gettempdir(), "_aws-ssm-juggle_cache"))
+
+is_windows = sys.platform == "win32"
+
+
+# see https://github.com/aws/aws-cli/blob/v2/awscli/compat.py
+@contextmanager
+def ignore_user_entered_signals():
+    """
+    Ignores user entered signals to avoid process getting killed.
+    """
+    if is_windows:
+        signal_list = [signal.SIGINT]
+    else:
+        signal_list = [signal.SIGINT, signal.SIGQUIT, signal.SIGTSTP]
+    actual_signals = []
+    for user_signal in signal_list:
+        actual_signals.append(signal.signal(user_signal, signal.SIG_IGN))
+    try:
+        yield
+    finally:
+        for sig, user_signal in enumerate(signal_list):
+            signal.signal(user_signal, actual_signals[sig])
 
 
 def show_menu(
@@ -35,7 +61,7 @@ def show_menu(
             keybindings={"interrupt": [{"key": "escape"}]},
         ).execute()
     except KeyboardInterrupt:
-        exit(0)
+        sys.exit(0)
     if selection is None:
         return None, len(source)
     return selection, indices[selection]
@@ -58,7 +84,7 @@ def port_forward(boto3_session: session.Session, remote_port: int, local_port: i
         )
     except exceptions.ClientError as err:
         print(err)
-        exit(1)
+        sys.exit(1)
     args = [
         "session-manager-plugin",
         json.dumps(
@@ -84,10 +110,8 @@ def port_forward(boto3_session: session.Session, remote_port: int, local_port: i
         ]
     )
     try:
-        os.execvp(
-            "session-manager-plugin",
-            args,
-        )
+        with ignore_user_entered_signals():
+            check_call(args)
     except FileNotFoundError:
         print("session-manager-plugin missing!")
 

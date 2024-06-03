@@ -4,14 +4,15 @@ aws-ssm-juggle ecs cli program
 """
 
 import json
-import os
+import sys
+from subprocess import check_call
 
 import configargparse
 import shtab
 from boto3 import session
 from botocore import exceptions
 
-from aws_ssm_juggle import get_boto3_profiles, port_forward, show_menu
+from aws_ssm_juggle import get_boto3_profiles, ignore_user_entered_signals, port_forward, show_menu
 
 
 class ECSSession:
@@ -72,7 +73,7 @@ class ECSSession:
             ).get("session")
         except exceptions.ClientError as err:
             print(err)
-            exit(1)
+            sys.exit(1)
         args = [
             "session-manager-plugin",
             json.dumps(ecs_execute_command_session),
@@ -84,10 +85,8 @@ class ECSSession:
             ),
         ]
         try:
-            os.execvp(
-                "session-manager-plugin",
-                args,
-            )
+            with ignore_user_entered_signals():
+                check_call(args)
         except FileNotFoundError:
             print("session-manager-plugin missing!")
 
@@ -379,7 +378,7 @@ def run():
         function.get(arguments.action)()
     except exceptions.ClientError as err:
         print(err)
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
