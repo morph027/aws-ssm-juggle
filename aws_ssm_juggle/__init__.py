@@ -1,12 +1,12 @@
 import json
 import os
+from tempfile import gettempdir
 
 from boto3 import session
 from botocore import exceptions
 from diskcache import Cache
 from InquirerPy import inquirer
 from InquirerPy.base import Choice
-from tempfile import gettempdir
 
 cache = Cache(os.path.join(gettempdir(), "_aws-ssm-juggle_cache"))
 
@@ -41,9 +41,7 @@ def show_menu(
     return selection, indices[selection]
 
 
-def port_forward(
-    boto3_session: session.Session, remote_port: int, local_port: int, target: str
-) -> None:
+def port_forward(boto3_session: session.Session, remote_port: int, local_port: int, target: str) -> None:
     """
     forward port
     """

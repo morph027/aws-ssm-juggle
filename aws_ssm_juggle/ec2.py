@@ -173,9 +173,7 @@ def ec2_paginator(boto3_session: session.Session, paginator: str, leaf: str, **k
     return res
 
 
-def get_instance_id(
-    boto3_session: session.Session, instance_id: str, instance_name: str = ""
-):
+def get_instance_id(boto3_session: session.Session, instance_id: str, instance_name: str = ""):
     """
     get instance_id
     """
