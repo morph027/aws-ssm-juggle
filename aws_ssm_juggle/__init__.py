@@ -1,8 +1,8 @@
-from contextlib import contextmanager
 import json
 import os
 import signal
 import sys
+from contextlib import contextmanager
 from subprocess import check_call
 from tempfile import gettempdir
 
