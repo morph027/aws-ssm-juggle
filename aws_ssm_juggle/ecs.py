@@ -380,3 +380,7 @@ def run():
     except exceptions.ClientError as err:
         print(err)
         exit(1)
+
+
+if __name__ == "__main__":
+    run()

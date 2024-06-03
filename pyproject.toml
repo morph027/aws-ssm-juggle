@@ -11,7 +11,7 @@ repository = "https://github.com/morph027/aws-ssm-juggle"
 configargparse = "*"
 boto3 = "*"
 shtab = "*"
-simple_term_menu = "*"
+InquirerPy = "*"
 diskcache = "*"
 
 [build-system]
