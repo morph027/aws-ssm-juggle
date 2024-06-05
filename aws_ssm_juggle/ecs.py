@@ -84,11 +84,8 @@ class ECSSession:
                 {"Target": self.target},
             ),
         ]
-        try:
-            with ignore_user_entered_signals():
-                check_call(args)
-        except FileNotFoundError:
-            print("session-manager-plugin missing!")
+        with ignore_user_entered_signals():
+            check_call(args)
 
 
 def get_parser():

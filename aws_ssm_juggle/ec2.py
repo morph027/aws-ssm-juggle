@@ -55,11 +55,8 @@ class EC2Session:
             self.boto3_session.profile_name,
             json.dumps(session_parameters),
         ]
-        try:
-            with ignore_user_entered_signals():
-                check_call(args)
-        except FileNotFoundError:
-            print("session-manager-plugin missing!")
+        with ignore_user_entered_signals():
+            check_call(args)
 
     def ssh(self):
         session_parameters = {
@@ -90,11 +87,8 @@ class EC2Session:
                 f"{self.instance_id}.{self.boto3_session.region_name}.compute.internal",
             ]
         )
-        try:
-            with ignore_user_entered_signals():
-                check_call(args)
-        except Exception as err:
-            print(err)
+        with ignore_user_entered_signals():
+            check_call(args)
 
     def port_forward(self):
         port_forward(

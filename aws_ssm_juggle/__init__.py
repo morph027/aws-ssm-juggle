@@ -16,6 +16,12 @@ cache = Cache(os.path.join(gettempdir(), "_aws-ssm-juggle_cache"))
 
 is_windows = sys.platform == "win32"
 
+try:
+    check_call(["session-manager-plugin", "--version"])
+except FileNotFoundError:
+    print("session-manager-plugin is missing")
+    sys.exit(1)
+
 
 # see https://github.com/aws/aws-cli/blob/v2/awscli/compat.py
 @contextmanager
@@ -109,11 +115,8 @@ def port_forward(boto3_session: session.Session, remote_port: int, local_port: i
             ),
         ]
     )
-    try:
-        with ignore_user_entered_signals():
-            check_call(args)
-    except FileNotFoundError:
-        print("session-manager-plugin missing!")
+    with ignore_user_entered_signals():
+        check_call(args)
 
 
 @cache.memoize(expire=600)
