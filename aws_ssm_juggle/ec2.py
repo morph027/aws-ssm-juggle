@@ -113,7 +113,6 @@ def get_parser():
     parser.add_argument(
         "--profile",
         help="AWS Profile",
-        default="default",
         choices=get_boto3_profiles(),
     )
     parser.add_argument(
