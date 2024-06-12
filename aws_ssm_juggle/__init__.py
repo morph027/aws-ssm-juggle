@@ -3,7 +3,7 @@ import os
 import signal
 import sys
 from contextlib import contextmanager
-from subprocess import check_call
+from subprocess import check_call, DEVNULL
 from tempfile import gettempdir
 
 from boto3 import session
@@ -17,7 +17,7 @@ cache = Cache(os.path.join(gettempdir(), "_aws-ssm-juggle_cache"))
 is_windows = sys.platform == "win32"
 
 try:
-    check_call(["session-manager-plugin", "--version"])
+    check_call(["session-manager-plugin", "--version"], stdout=DEVNULL)
 except FileNotFoundError:
     print("session-manager-plugin is missing")
     sys.exit(1)
