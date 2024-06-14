@@ -3,6 +3,7 @@ import os
 import signal
 import sys
 from contextlib import contextmanager
+from getpass import getuser
 from subprocess import check_call, DEVNULL
 from tempfile import gettempdir
 
@@ -12,7 +13,10 @@ from diskcache import Cache
 from InquirerPy import inquirer
 from InquirerPy.base import Choice
 
-cache = Cache(os.path.join(gettempdir(), "_aws-ssm-juggle_cache"))
+
+tmpdir = os.path.join(gettempdir(), f"_aws-ssm-juggle_cache_{getuser()}")
+os.makedirs(tmpdir, exist_ok=True, mode=0o700)
+cache = Cache(tmpdir)
 
 is_windows = sys.platform == "win32"
 
