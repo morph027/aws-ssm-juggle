@@ -4,7 +4,7 @@ import signal
 import sys
 from contextlib import contextmanager
 from getpass import getuser
-from subprocess import check_call, DEVNULL
+from subprocess import DEVNULL, check_call
 from tempfile import gettempdir
 
 from boto3 import session
@@ -12,7 +12,6 @@ from botocore import exceptions
 from diskcache import Cache
 from InquirerPy import inquirer
 from InquirerPy.base import Choice
-
 
 tmpdir = os.path.join(gettempdir(), f"_aws-ssm-juggle_cache_{getuser()}")
 os.makedirs(tmpdir, exist_ok=True, mode=0o700)
