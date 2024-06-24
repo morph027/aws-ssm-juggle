@@ -12,7 +12,12 @@ import shtab
 from boto3 import session
 from botocore import exceptions
 
-from aws_ssm_juggle import get_boto3_profiles, ignore_user_entered_signals, port_forward, show_menu
+from aws_ssm_juggle import (
+    get_boto3_profiles,
+    ignore_user_entered_signals,
+    port_forward,
+    show_menu,
+)
 
 
 class ECSSession:
@@ -337,10 +342,13 @@ def run():
                 task_definition = task_definition or ecs.describe_task_definition(
                     taskDefinition=task_definition_arn
                 ).get("taskDefinition")
-                ports = [
-                    str(container.get("containerPort"))
-                    for container in task_definition.get("containerDefinitions")[container_index].get("portMappings")
-                ]
+                ports = []
+                for _container in task_definition.get("containerDefinitions"):
+                    if _container.get("name") == container:
+                        ports = [
+                            str(_port_mapping.get("containerPort")) for _port_mapping in _container.get("portMappings")
+                        ]
+                        break
                 container, remote_port, _ = get_port(
                     cluster=cluster,
                     service=service,
