@@ -59,6 +59,11 @@ def show_menu(
     if clear_screen:
         print("\033c", end="", flush=True)
     source = source or items
+    if not source:
+        print("No results")
+        if not back:
+            sys.exit(78)
+        return None, len(source)
     indices = dict(zip(source, list(range(0, len(source)))))
     if back:
         items.append(Choice(value=None, name="Back"))
