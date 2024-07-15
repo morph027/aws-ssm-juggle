@@ -282,8 +282,16 @@ def get_port(
     return (container, *ret)
 
 
-def menu_loop_condition(cluster: str, service: str, task: str, container: str, remote_port: int, action: str):
-    menu_loop_condition = cluster and service and task and container
+def menu_loop_condition(
+    cluster: str,
+    service: str,
+    task: str,
+    container: str,
+    container_index: int,
+    remote_port: int,
+    action: str,
+):
+    menu_loop_condition = cluster and service and task and container and container_index >= 0
     if action == "forward":
         menu_loop_condition = menu_loop_condition and remote_port
     return menu_loop_condition
@@ -306,11 +314,12 @@ def run():
         remote_port = arguments.remote_port
     if "local_port" in arguments:
         local_port = arguments.local_port
-    cluster, service, task, container, remote_port, task_definition = (
+    cluster, service, task, container, container_index, remote_port, task_definition = (
         arguments.cluster,
         arguments.service,
         arguments.task,
         arguments.container,
+        -1,
         remote_port,
         None,
     )
