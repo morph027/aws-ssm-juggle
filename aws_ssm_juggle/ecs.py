@@ -329,6 +329,7 @@ def run():
             service=service,
             task=task,
             container=container,
+            container_index=container_index,
             remote_port=remote_port,
             action=arguments.action,
         ):
