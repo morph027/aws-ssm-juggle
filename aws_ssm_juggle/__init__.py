@@ -67,17 +67,20 @@ def show_menu(
     indices = dict(zip(source, list(range(0, len(source)))))
     if back:
         items.append(Choice(value=None, name="Back"))
+    items.append(Choice(value="quit", name="Quit"))
     try:
         selection = inquirer.fuzzy(
             message=title,
             long_instruction='Type to search - Press "ESC" to quit',
             choices=items,
-            keybindings={"interrupt": [{"key": "escape"}]},
+            keybindings={"interrupt": [{"key": "escape"}, {"key": "c-c"}]},
         ).execute()
     except KeyboardInterrupt:
         sys.exit(0)
     if selection is None:
         return None, len(source)
+    if selection == "quit":
+        sys.exit(0)
     return selection, indices[selection]
 
 
