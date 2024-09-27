@@ -32,3 +32,6 @@ select = ["I", "F"]
 [tool.ruff.format]
 quote-style = "double"
 skip-magic-trailing-comma = false
+
+[tool.isort]
+profile = "black"
