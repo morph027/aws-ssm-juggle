@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from getpass import getuser
 from subprocess import DEVNULL, check_call
 from tempfile import gettempdir
+from time import sleep
 
 from boto3 import session
 from botocore import exceptions
@@ -46,6 +47,11 @@ def ignore_user_entered_signals():
             signal.signal(user_signal, actual_signals[sig])
 
 
+def flush(clear_screen: bool):
+    if clear_screen:
+        print("\033c", end="", flush=True)
+
+
 def show_menu(
     items: list,
     title: str,
@@ -56,13 +62,14 @@ def show_menu(
     """
     menu function
     """
-    if clear_screen:
-        print("\033c", end="", flush=True)
+    flush(clear_screen)
     source = source or items
     if not source:
-        print("No results")
+        print(f"{title} - No results found")
         if not back:
             sys.exit(78)
+        input("\nPress <enter> to continue")
+        flush(clear_screen)
         return None, len(source)
     indices = dict(zip(source, list(range(0, len(source)))))
     if back:
