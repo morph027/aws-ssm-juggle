@@ -6,7 +6,6 @@ from contextlib import contextmanager
 from getpass import getuser
 from subprocess import DEVNULL, check_call
 from tempfile import gettempdir
-from time import sleep
 
 from boto3 import session
 from botocore import exceptions

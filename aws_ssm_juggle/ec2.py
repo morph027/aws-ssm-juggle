@@ -8,7 +8,12 @@ import shtab
 from boto3 import session
 from botocore import exceptions
 
-from aws_ssm_juggle import get_boto3_profiles, ignore_user_entered_signals, port_forward, show_menu
+from aws_ssm_juggle import (
+    get_boto3_profiles,
+    ignore_user_entered_signals,
+    port_forward,
+    show_menu,
+)
 
 
 class EC2Session:
@@ -20,16 +25,16 @@ class EC2Session:
         self,
         boto3_session: session.Session,
         instance_id: str,
-        local_port: int,
-        remote_port: int,
-        ssh_args: str,
+        **kwargs,
     ):
         self.boto3_session = boto3_session
         self.ec2 = self.boto3_session.client("ec2")
         self.instance_id = instance_id
-        self.local_port = local_port
-        self.remote_port = remote_port
-        self.ssh_args = ssh_args
+        self.document = kwargs.get("document")
+        self.local_port = kwargs.get("local_port")
+        self.parameters = (kwargs.get("parameters"),)
+        self.remote_port = kwargs.get("remote_port")
+        self.ssh_args = kwargs.get("ssh_args")
         self.ssm = self.boto3_session.client("ssm")
         self.target = self.instance_id
 
@@ -37,6 +42,19 @@ class EC2Session:
         session_parameters = {
             "Target": self.instance_id,
         }
+        if self.document:
+            session_parameters.update(
+                {
+                    "DocumentName": self.document,
+                }
+            )
+        # somehow get's passed as tuple
+        if all(self.parameters):
+            session_parameters.update(
+                {
+                    "Parameters": next(iter(self.parameters)),
+                }
+            )
         try:
             ssm_start_session = self.ssm.start_session(**session_parameters)
         except exceptions.ClientError as err:
@@ -133,7 +151,16 @@ def get_parser():
         help="action",
     )
     subparsers.required = True
-    subparsers.add_parser("start", help="Start interactive ssm session")
+    start = subparsers.add_parser("start", help="Start interactive ssm session")
+    start.add_argument(
+        "--document",
+        help="document to use for ssm session (e.g. 'AWS-StartInteractiveCommand')",
+    )
+    start.add_argument(
+        "--parameters",
+        help='(json) parameters to use for the ssm session document (e.g. \'{"command": ["bash -l"]}\')',
+        type=json.loads,
+    )
     ssh = subparsers.add_parser("ssh", help="Start ssh session")
     ssh.add_argument(
         "--ssh-args",
@@ -210,15 +237,39 @@ def run():
         "profile_name": arguments.profile,
     }
     boto3_session = session.Session(**boto3_session_args)
+    ec2_session_args = {}
     instance_name = arguments.instance_name
     instance_id = arguments.instance_id
-    ssh_args, remote_port, local_port = None, None, None
-    if "ssh_args" in arguments:
-        ssh_args = arguments.ssh_args
-    if "remote_port" in arguments:
-        remote_port = arguments.remote_port
-    if "local_port" in arguments:
-        local_port = arguments.local_port
+    if "document" in arguments and arguments.document:
+        ec2_session_args.update(
+            {
+                "document": arguments.document,
+            }
+        )
+    if "local_port" in arguments and arguments.local_port:
+        ec2_session_args.update(
+            {
+                "local_port": arguments.local_port,
+            }
+        )
+    if "parameters" in arguments and arguments.parameters:
+        ec2_session_args.update(
+            {
+                "parameters": arguments.parameters,
+            }
+        )
+    if "remote_port" in arguments and arguments.remote_port:
+        ec2_session_args.update(
+            {
+                "remote_port": arguments.remote_port,
+            }
+        )
+    if "ssh_args" in arguments and arguments.ssh_args:
+        ec2_session_args.update(
+            {
+                "ssh_args": arguments.ssh_args,
+            }
+        )
     try:
         while not instance_id:
             instance_id, _ = get_instance_id(
@@ -230,9 +281,7 @@ def run():
         ec2_session = EC2Session(
             boto3_session=boto3_session,
             instance_id=instance_id,
-            local_port=local_port,
-            remote_port=remote_port,
-            ssh_args=ssh_args,
+            **ec2_session_args,
         )
         function = {
             "start": ec2_session.start,
