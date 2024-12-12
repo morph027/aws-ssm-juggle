@@ -88,6 +88,11 @@ See `ec2-juggle --help` for all features.
 ec2-juggle start
 ```
 
+```bash
+ec2-juggle start --document AWS-StartInteractiveCommand --command '{"command": ["sudo -i"]}'
+```
+
+
 #### Start ssh session
 
 Default:
