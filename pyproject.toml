@@ -1,26 +1,24 @@
-[tool.poetry]
+[project]
 name = "aws-ssm-juggle"
 version = "24.12.0"
 description = "AWS SSM tool for ECS/EC2 (Shell, Port Forwarding, ...)"
-authors = ["Stefan Heitmüller <stefan.heitmueller@gmx.com>"]
+authors = [{ name = "Stefan Heitmüller", email = "stefan.heitmueller@gmx.com" }]
 readme = "README.md"
 license = "MIT"
-repository = "https://github.com/morph027/aws-ssm-juggle"
+dependencies = [
+    "configargparse",
+    "boto3",
+    "shtab",
+    "InquirerPy",
+    "diskcache",
+]
 
-[tool.poetry.dependencies]
-configargparse = "*"
-boto3 = "*"
-shtab = "*"
-InquirerPy = "*"
-diskcache = "*"
+[project.urls]
+Repository = "https://github.com/morph027/aws-ssm-juggle"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.scripts]
-ecs-juggle = 'aws_ssm_juggle.ecs:run'
-ec2-juggle = 'aws_ssm_juggle.ec2:run'
+[project.scripts]
+ecs-juggle = "aws_ssm_juggle.ecs:run"
+ec2-juggle = "aws_ssm_juggle.ec2:run"
 
 [tool.ruff]
 line-length = 120
@@ -35,3 +33,7 @@ skip-magic-trailing-comma = false
 
 [tool.isort]
 profile = "black"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
