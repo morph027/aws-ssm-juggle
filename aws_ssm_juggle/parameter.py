@@ -41,7 +41,10 @@ def get_version(ssm: session.Session.client, parameter: str, version: int):
         leaf="Parameters",
         Name=parameter,
     )
-    parameters = [[version.get("Version"), version.get("Labels", []), version.get("Value")] for version in versions]
+    parameters = [
+        [version.get("Version"), version.get("Labels", []), version.get("Value")]
+        for version in versions
+    ]
     _versions = []
     for idx, param in enumerate(parameters):
         _versions.append(f"{param[0]} 🏷️ {','.join(param[1])}" if param[1] else param[0])
@@ -100,8 +103,13 @@ def run():
             value=value,
         ):
             parameter, _ = get_parameter(ssm=ssm, parameter=parameter)
-            parameter, version, value, _ = get_version(ssm=ssm, parameter=parameter, version=version)
-            value = edit(text=value, editor="vim", extension=".aws.ecs.taskdefinition.yaml").strip()
+            parameter, version, value, _ = get_version(
+                ssm=ssm, parameter=parameter, version=version
+            )
+            value = edit(
+                text=value,
+                editor="vim",
+            ).strip()
     except exceptions.ClientError as err:
         print(err)
         sys.exit(1)

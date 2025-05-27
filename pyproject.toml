@@ -19,6 +19,7 @@ Repository = "https://github.com/morph027/aws-ssm-juggle"
 [project.scripts]
 ecs-juggle = "aws_ssm_juggle.ecs:run"
 ec2-juggle = "aws_ssm_juggle.ec2:run"
+parameter-juggle = "aws_ssm_juggle.parameter:run"
 
 [tool.ruff]
 line-length = 120
