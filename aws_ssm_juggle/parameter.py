@@ -7,7 +7,6 @@ import sys
 
 from boto3 import session
 from botocore import exceptions
-from click import edit
 
 from aws_ssm_juggle import (
     show_menu,
@@ -58,7 +57,7 @@ def get_version(ssm: session.Session.client, parameter: str, version: int):
         return (None, *ret)
     _version, _index = ret
     _value = parameters[_index][2]
-    return (parameter, _version.split(" 🏷️ ")[0], _value, _index)
+    return (parameter, str(_version).split(" 🏷️ ")[0] or None, _value, _index)
 
 
 def get_parameter(ssm: session.Session.client, parameter: str):
@@ -106,13 +105,10 @@ def run():
             parameter, version, value, _ = get_version(
                 ssm=ssm, parameter=parameter, version=version
             )
-            value = edit(
-                text=value,
-                editor="vim",
-            ).strip()
     except exceptions.ClientError as err:
         print(err)
         sys.exit(1)
+    print(value)
 
 
 if __name__ == "__main__":
