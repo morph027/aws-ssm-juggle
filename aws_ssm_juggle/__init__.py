@@ -4,7 +4,7 @@ import signal
 import sys
 from contextlib import contextmanager
 from getpass import getuser
-from subprocess import DEVNULL, check_call
+from subprocess import DEVNULL, Popen, check_call
 from tempfile import gettempdir
 
 from boto3 import session
@@ -90,7 +90,13 @@ def show_menu(
     return selection, indices[selection]
 
 
-def port_forward(boto3_session: session.Session, remote_port: int, local_port: int, target: str) -> None:
+def port_forward(
+    boto3_session: session.Session,
+    remote_port: int,
+    local_port: int,
+    target: str,
+    background: bool = False,
+) -> None:
     """
     forward port
     """
@@ -132,6 +138,8 @@ def port_forward(boto3_session: session.Session, remote_port: int, local_port: i
             ),
         ]
     )
+    if background:
+        return Popen(args, stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL, start_new_session=True)
     with ignore_user_entered_signals():
         check_call(args)
 

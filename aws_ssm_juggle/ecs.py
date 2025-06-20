@@ -6,11 +6,13 @@ aws-ssm-juggle ecs cli program
 import json
 import sys
 from subprocess import check_call
+from time import sleep
 
 import configargparse
 import shtab
 from boto3 import session
 from botocore import exceptions
+from psutil import Process
 
 from aws_ssm_juggle import (
     get_boto3_profiles,
@@ -36,6 +38,7 @@ class ECSSession:
         remote_port: int,
         task: str,
         task_details: dict,
+        **kwargs,
     ):
         """
         ECSSession
@@ -45,6 +48,7 @@ class ECSSession:
         self.command = command
         self.container = container
         self.container_index = container_index
+        self.daemon_details = kwargs.get("daemon_details")
         self.ecs = self.boto3_session.client("ecs")
         self.local_port = local_port
         self.remote_port = remote_port
@@ -57,12 +61,30 @@ class ECSSession:
         self.target = f"ecs:{self.cluster}_{self.runtime_id.split('-')[0]}_{self.runtime_id}"
 
     def port_forward(self):
-        port_forward(
+        if not self.daemon_details:
+            port_forward(
+                boto3_session=self.boto3_session,
+                remote_port=self.remote_port,
+                local_port=self.local_port,
+                target=self.target,
+            )
+            return
+        _daemon = port_forward(
             boto3_session=self.boto3_session,
             remote_port=self.remote_port,
             local_port=self.local_port,
             target=self.target,
+            background=True,
         )
+        _process = Process(_daemon.pid)
+        port = 0
+        while not (connections := _process.net_connections()):
+            sleep(1)
+        for connection in connections:
+            if connection.status == "LISTEN":
+                port = connection.laddr[1]
+        with open(self.daemon_details, "w") as f:
+            json.dump({"pid": _process.pid, "port": port}, f)
 
     def execute_command(self):
         """
@@ -146,6 +168,10 @@ def get_parser():
         help="Local port for forwarding. Defaults to random port (0)",
         type=int,
         default=0,
+    )
+    forward.add_argument(
+        "--daemon-details",
+        help="Run in daemon mode (background) and save details to this file (JSON)",
     )
     command = subparsers.add_parser("command", help="Execute command")
     command.add_argument(
@@ -374,6 +400,7 @@ def run():
             command=command,
             container=container,
             container_index=container_index,
+            daemon_details=arguments.daemon_details,
             local_port=local_port,
             remote_port=remote_port,
             task=task,
