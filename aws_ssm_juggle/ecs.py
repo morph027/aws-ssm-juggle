@@ -55,10 +55,18 @@ class ECSSession:
         self.ssm = self.boto3_session.client("ssm")
         self.task = task
         self.task_details = task_details
-        self.runtime_id = task_details.get("tasks")[0].get("containers")[container_index].get("runtimeId")
+        self.runtime_id = (
+            task_details.get("tasks")[0]
+            .get("containers")[container_index]
+            .get("runtimeId")
+        )
         if not self.runtime_id:
-            raise RuntimeError("unable to get runtimeId from container, looks like it's not running.")
-        self.target = f"ecs:{self.cluster}_{self.runtime_id.split('-')[0]}_{self.runtime_id}"
+            raise RuntimeError(
+                "unable to get runtimeId from container, looks like it's not running."
+            )
+        self.target = (
+            f"ecs:{self.cluster}_{self.runtime_id.split('-')[0]}_{self.runtime_id}"
+        )
 
     def port_forward(self):
         if not self.daemon_details:
@@ -69,14 +77,16 @@ class ECSSession:
                 target=self.target,
             )
             return
-        _process = port_forward(
+        _daemon = port_forward(
             boto3_session=self.boto3_session,
             remote_port=self.remote_port,
             local_port=self.local_port,
             target=self.target,
             background=True,
         )
-        while not (connections := Process(_process.pid).net_connections()):
+        _process = Process(_daemon.pid)
+        port = 0
+        while not (connections := _process.net_connections()):
             sleep(1)
         for connection in connections:
             if connection.status == "LISTEN":
@@ -266,7 +276,9 @@ def get_task(ecs: session.Session.client, task: str, cluster: str, service: str)
     return (cluster, service, *ret)
 
 
-def get_container(cluster: str, service: str, task: str, containers: list, container: str):
+def get_container(
+    cluster: str, service: str, task: str, containers: list, container: str
+):
     """
     get container
     """
@@ -315,7 +327,9 @@ def menu_loop_condition(
     remote_port: int,
     action: str,
 ):
-    menu_loop_condition = cluster and service and task and container and container_index >= 0
+    menu_loop_condition = (
+        cluster and service and task and container and container_index >= 0
+    )
     if action == "forward":
         menu_loop_condition = menu_loop_condition and remote_port
     return menu_loop_condition
@@ -359,10 +373,15 @@ def run():
         ):
             cluster, _ = get_cluster(ecs=ecs, cluster=cluster)
             cluster, service, _ = get_service(ecs=ecs, cluster=cluster, service=service)
-            cluster, service, task, _ = get_task(ecs=ecs, cluster=cluster, service=service, task=task)
+            cluster, service, task, _ = get_task(
+                ecs=ecs, cluster=cluster, service=service, task=task
+            )
             if cluster and task:
                 task_details = ecs.describe_tasks(cluster=cluster, tasks=[task])
-                containers = [container.get("name") for container in task_details.get("tasks")[0].get("containers")]
+                containers = [
+                    container.get("name")
+                    for container in task_details.get("tasks")[0].get("containers")
+                ]
                 ret = get_container(
                     cluster=cluster,
                     service=service,
@@ -372,7 +391,9 @@ def run():
                 )
                 task, container, container_index = ret
             if (arguments.action == "forward" and container) and not remote_port:
-                task_definition_arn = task_details.get("tasks")[0].get("taskDefinitionArn")
+                task_definition_arn = task_details.get("tasks")[0].get(
+                    "taskDefinitionArn"
+                )
                 task_definition = task_definition or ecs.describe_task_definition(
                     taskDefinition=task_definition_arn
                 ).get("taskDefinition")
@@ -380,7 +401,8 @@ def run():
                 for _container in task_definition.get("containerDefinitions"):
                     if _container.get("name") == container:
                         ports = [
-                            str(_port_mapping.get("containerPort")) for _port_mapping in _container.get("portMappings")
+                            str(_port_mapping.get("containerPort"))
+                            for _port_mapping in _container.get("portMappings")
                         ]
                         break
                 container, remote_port, _ = get_port(
