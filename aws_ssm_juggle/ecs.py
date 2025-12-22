@@ -334,8 +334,11 @@ def run():
     boto3_session = session.Session(**boto3_session_args)
     ecs = boto3_session.client("ecs")
     command, remote_port, local_port = None, None, None
+    daemon_details = None
     if "command" in arguments:
         command = arguments.command
+    if "forward" in arguments:
+        daemon_details = arguments.daemon_details
     if "remote_port" in arguments:
         remote_port = arguments.remote_port
     if "local_port" in arguments:
@@ -400,7 +403,7 @@ def run():
             command=command,
             container=container,
             container_index=container_index,
-            daemon_details=arguments.daemon_details,
+            daemon_details=daemon_details,
             local_port=local_port,
             remote_port=remote_port,
             task=task,
