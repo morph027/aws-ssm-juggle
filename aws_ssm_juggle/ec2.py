@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 import json
-from subprocess import check_call
+from subprocess import CalledProcessError, check_call
 
 import configargparse
 import shtab
 from boto3 import session
 from botocore import exceptions
+from munch import DefaultMunch
 
 from aws_ssm_juggle import (
     get_boto3_profiles,
@@ -35,6 +36,7 @@ class EC2Session:
         self.parameters = (kwargs.get("parameters"),)
         self.remote_port = kwargs.get("remote_port")
         self.ssh_args = kwargs.get("ssh_args")
+        self.scp_args = kwargs.get("scp_args")
         self.ssm = self.boto3_session.client("ssm")
         self.target = self.instance_id
 
@@ -65,7 +67,7 @@ class EC2Session:
             "TokenValue": ssm_start_session.get("TokenValue"),
             "StreamUrl": ssm_start_session.get("StreamUrl"),
         }
-        args = [
+        _args = [
             "session-manager-plugin",
             json.dumps(session_response),
             self.boto3_session.region_name,
@@ -74,9 +76,9 @@ class EC2Session:
             json.dumps(session_parameters),
         ]
         with ignore_user_entered_signals():
-            check_call(args)
+            check_call(_args)
 
-    def ssh(self):
+    def _ssh_scp_proxy_command(self):
         session_parameters = {
             "Target": self.instance_id,
             "DocumentName": "AWS-StartSSHSession",
@@ -94,11 +96,14 @@ class EC2Session:
             "TokenValue": ssm_start_session.get("TokenValue"),
             "StreamUrl": ssm_start_session.get("StreamUrl"),
         }
-        proxy_command = f"ProxyCommand=session-manager-plugin '{json.dumps(session_response)}' {self.boto3_session.region_name} StartSession {self.boto3_session.profile_name} '{json.dumps(session_parameters)}'"
-        args = ["ssh"]
-        if self.ssh_args:
-            args.extend(self.ssh_args.split(" "))
-        args.extend(
+        return f"ProxyCommand=session-manager-plugin '{json.dumps(session_response)}' {self.boto3_session.region_name} StartSession {self.boto3_session.profile_name} '{json.dumps(session_parameters)}'"
+
+    def ssh(self, args: str = ""):
+        proxy_command = self._ssh_scp_proxy_command()
+        _args = ["ssh"]
+        if args:
+            _args.extend(args.split(" "))
+        _args.extend(
             [
                 "-o",
                 proxy_command,
@@ -106,7 +111,41 @@ class EC2Session:
             ]
         )
         with ignore_user_entered_signals():
-            check_call(args)
+            try:
+                check_call(_args)
+            except CalledProcessError as e:
+                print(f"\nError:\n{e}")
+
+    def scp(self, source: str, target: str, args: str = ""):
+        proxy_command = self._ssh_scp_proxy_command()
+        _args = ["scp"]
+        if args:
+            _args.extend(args.split(" "))
+        if source.startswith("{instance}"):
+            _scp = [
+                f"{self.instance_id}.{self.boto3_session.region_name}.compute.internal{source.replace('{instance}', '')}",
+                target,
+            ]
+        elif target.startswith("{instance}"):
+            _scp = [
+                source,
+                f"{self.instance_id}.{self.boto3_session.region_name}.compute.internal{target.replace('{instance}', '')}",
+            ]
+        else:
+            print("Missing {instance} in either source or target")
+            exit(1)
+        _args.extend(
+            [
+                "-o",
+                proxy_command,
+            ]
+            + _scp
+        )
+        with ignore_user_entered_signals():
+            try:
+                check_call(_args)
+            except CalledProcessError as e:
+                print(f"\nError:\n{e}")
 
     def port_forward(self):
         port_forward(
@@ -166,6 +205,21 @@ def get_parser():
         "--ssh-args",
         help="ssh command arguments to pass on",
     )
+    scp = subparsers.add_parser("scp", help="Start scp session")
+    scp.add_argument(
+        "--source",
+        help="scp source - use {instance} as placeholder if you want to use the ec2 instance as source (e.g. {instance}:/tmp/foo)",
+        required=True,
+    )
+    scp.add_argument(
+        "--target",
+        help="scp target - use {instance} as placeholder if you want to use the ec2 instance as target (e.g. {instance}:/tmp/foo)",
+        required=True,
+    )
+    scp.add_argument(
+        "--scp-args",
+        help="scp command arguments to pass on",
+    )
     forward = subparsers.add_parser("forward", help="Start ssh session")
     forward.add_argument(
         "--remote-port",
@@ -179,7 +233,7 @@ def get_parser():
         type=int,
         default=0,
     )
-    return parser
+    return DefaultMunch.fromDict(parser)
 
 
 def ec2_paginator(boto3_session: session.Session, paginator: str, leaf: str, **kwargs):
@@ -264,12 +318,6 @@ def run():
                 "remote_port": arguments.remote_port,
             }
         )
-    if "ssh_args" in arguments and arguments.ssh_args:
-        ec2_session_args.update(
-            {
-                "ssh_args": arguments.ssh_args,
-            }
-        )
     try:
         while not instance_id:
             instance_id, _ = get_instance_id(
@@ -283,12 +331,21 @@ def run():
             instance_id=instance_id,
             **ec2_session_args,
         )
-        function = {
-            "start": ec2_session.start,
-            "ssh": ec2_session.ssh,
-            "forward": ec2_session.port_forward,
-        }
-        function.get(arguments.action)()
+        match arguments.action:
+            case "start":
+                ec2_session.start()
+            case "ssh":
+                ec2_session.ssh(
+                    args=arguments.ssh_args,
+                )
+            case "scp":
+                ec2_session.scp(
+                    source=arguments.source,
+                    target=arguments.target,
+                    args=arguments.scp_args,
+                )
+            case "forward":
+                ec2_session.port_forward()
     except exceptions.ClientError as err:
         print(err)
         exit(1)
