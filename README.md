@@ -12,6 +12,12 @@ pip install aws-ssm-juggle
 
 #### Linux
 
+#### Repo
+
+With updates (recommended): See [aws-session-manager-plugin](https://gitlab.com/packaging/aws-session-manager-plugin)
+
+#### Manual
+
 ```bash
 curl https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb -o "/tmp/session-manager-plugin.deb"
 mkdir -p ~/bin
@@ -105,6 +111,20 @@ With extra arguments:
 
 ```bash
 ec2-juggle ssh --ssh-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ubuntu"
+```
+
+#### Copy files with scp
+
+Default:
+
+```bash
+ec2-juggle scp --source '{instance}:/tmp/foo' --target './bar'
+```
+
+With extra arguments:
+
+```bash
+ec2-juggle scp --scp-args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ubuntu" --source '{instance}:/tmp/foo' --target './bar'
 ```
 
 #### Port forwarding
