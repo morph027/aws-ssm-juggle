@@ -157,17 +157,18 @@ def get_parser():
         help="action",
     )
     subparsers.required = True
-    forward = subparsers.add_parser("forward", help="Portforwarding")
+    forward = subparsers.add_parser("forward", help="Start ssh portforwarding")
     forward.add_argument(
         "--remote-port",
         help="ECS container remote port",
         type=int,
+        required=True,
     )
     forward.add_argument(
         "--local-port",
-        help="Local port for forwarding. Defaults to random port (0)",
+        help="Local port for forwarding.",
         type=int,
-        default=0,
+        required=True,
     )
     forward.add_argument(
         "--daemon-details",

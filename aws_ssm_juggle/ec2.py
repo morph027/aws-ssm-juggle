@@ -220,7 +220,7 @@ def get_parser():
         "--scp-args",
         help="scp command arguments to pass on",
     )
-    forward = subparsers.add_parser("forward", help="Start ssh session")
+    forward = subparsers.add_parser("forward", help="Start ssh port forwarding")
     forward.add_argument(
         "--remote-port",
         help="EC2 instance remote port",
@@ -229,9 +229,9 @@ def get_parser():
     )
     forward.add_argument(
         "--local-port",
-        help="Local port for forwarding. Defaults to random port (0)",
+        help="Local port for forwarding.",
         type=int,
-        default=0,
+        required=True,
     )
     return DefaultMunch.fromDict(parser)
 
@@ -249,7 +249,9 @@ def ec2_paginator(boto3_session: session.Session, paginator: str, leaf: str, **k
     return res
 
 
-def get_instance_id(boto3_session: session.Session, instance_id: str, instance_name: str = ""):
+def get_instance_id(
+    boto3_session: session.Session, instance_id: str, instance_name: str = ""
+):
     """
     get instance_id
     """
@@ -300,7 +302,7 @@ def run():
                 "document": arguments.document,
             }
         )
-    if "local_port" in arguments and arguments.local_port:
+    if "local_port" in arguments:
         ec2_session_args.update(
             {
                 "local_port": arguments.local_port,
@@ -312,7 +314,7 @@ def run():
                 "parameters": arguments.parameters,
             }
         )
-    if "remote_port" in arguments and arguments.remote_port:
+    if "remote_port" in arguments:
         ec2_session_args.update(
             {
                 "remote_port": arguments.remote_port,
