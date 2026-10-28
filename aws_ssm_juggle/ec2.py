@@ -274,7 +274,9 @@ def get_instance_id(boto3_session: session.Session, instance_id: str, instance_n
     for reservation in reservations:
         for instance in reservation.get("Instances"):
             tags = {tag["Key"]: tag["Value"] for tag in instance.get("Tags", [])}
-            instances.append(f"{instance.get('InstanceId')} - {tags.get('Name')}")
+            # show private ip and, if available, public ip next to the name
+            ips = [ip for ip in (instance.get("PrivateIpAddress"), instance.get("PublicIpAddress")) if ip]
+            instances.append(f"{instance.get('InstanceId')} - {tags.get('Name')} - {' / '.join(ips) or 'no ip'}")
     return show_menu(
         items=instances,
         title="Select instance id",
