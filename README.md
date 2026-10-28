@@ -121,6 +121,12 @@ Default:
 ec2-juggle scp --source '{instance}:/tmp/foo' --target './bar'
 ```
 
+Copy directories recursively:
+
+```bash
+ec2-juggle scp --recursive --source './my-folder' --target '{instance}:/tmp/'
+```
+
 With extra arguments:
 
 ```bash

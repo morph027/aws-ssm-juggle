@@ -116,9 +116,11 @@ class EC2Session:
             except CalledProcessError as e:
                 print(f"\nError:\n{e}")
 
-    def scp(self, source: str, target: str, args: str = ""):
+    def scp(self, source: str, target: str, args: str = "", recursive: bool = False):
         proxy_command = self._ssh_scp_proxy_command()
         _args = ["scp"]
+        if recursive:
+            _args.append("-r")
         if args:
             _args.extend(args.split(" "))
         if source.startswith("{instance}"):
@@ -210,11 +212,17 @@ def get_parser():
         "--source",
         help="scp source - use {instance} as placeholder if you want to use the ec2 instance as source (e.g. {instance}:/tmp/foo)",
         required=True,
-    )
+    ).complete = shtab.FILE  # local file/folder shell-completion
     scp.add_argument(
         "--target",
         help="scp target - use {instance} as placeholder if you want to use the ec2 instance as target (e.g. {instance}:/tmp/foo)",
         required=True,
+    ).complete = shtab.FILE  # local file/folder shell-completion
+    scp.add_argument(
+        "-r",
+        "--recursive",
+        help="recursively copy entire directories",
+        action="store_true",
     )
     scp.add_argument(
         "--scp-args",
@@ -345,6 +353,7 @@ def run():
                     source=arguments.source,
                     target=arguments.target,
                     args=arguments.scp_args,
+                    recursive=arguments.recursive,
                 )
             case "forward":
                 ec2_session.port_forward()
