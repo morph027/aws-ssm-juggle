@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import sys
 from subprocess import CalledProcessError, check_call
 
 import configargparse
@@ -61,7 +62,7 @@ class EC2Session:
             ssm_start_session = self.ssm.start_session(**session_parameters)
         except exceptions.ClientError as err:
             print(err)
-            exit(1)
+            sys.exit(1)
         session_response = {
             "SessionId": ssm_start_session.get("SessionId"),
             "TokenValue": ssm_start_session.get("TokenValue"),
@@ -90,7 +91,7 @@ class EC2Session:
             ssm_start_session = self.ssm.start_session(**session_parameters)
         except exceptions.ClientError as err:
             print(err)
-            exit(1)
+            sys.exit(1)
         session_response = {
             "SessionId": ssm_start_session.get("SessionId"),
             "TokenValue": ssm_start_session.get("TokenValue"),
@@ -135,7 +136,7 @@ class EC2Session:
             ]
         else:
             print("Missing {instance} in either source or target")
-            exit(1)
+            sys.exit(1)
         _args.extend(
             [
                 "-o",
@@ -359,7 +360,7 @@ def run():
                 ec2_session.port_forward()
     except exceptions.ClientError as err:
         print(err)
-        exit(1)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
