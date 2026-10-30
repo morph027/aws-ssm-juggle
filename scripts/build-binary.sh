@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Build a standalone linux binary of ec2-juggle using nuitka.
-# Output: dist/linux/<platform>/ec2-juggle and dist/linux/<platform>/ec2-juggle_<arch>
+# Build standalone linux binaries of ec2-juggle and ecs-juggle using nuitka.
+# Usage: scripts/build-binary.sh [ec2-juggle|ecs-juggle ...]  (default: both)
+# Output: dist/linux/<platform>/<command> and dist/linux/<platform>/<command>_<arch>
 set -e
 
 if [ "${DEBUG:-0}" -eq 1 ]; then
@@ -8,8 +9,19 @@ if [ "${DEBUG:-0}" -eq 1 ]; then
 fi
 
 NUITKA_VERSION="${NUITKA_VERSION:-4.3}"
-command="ec2-juggle"
-module="aws_ssm_juggle.ec2"
+declare -A modules=(
+    ["ec2-juggle"]="aws_ssm_juggle.ec2"
+    ["ecs-juggle"]="aws_ssm_juggle.ecs"
+)
+if [ "$#" -eq 0 ]; then
+    set -- ec2-juggle ecs-juggle
+fi
+for command in "$@"; do
+    if [ -z "${modules[${command}]:-}" ]; then
+        echo "Unknown command: ${command} (expected one of: ${!modules[*]})"
+        exit 1
+    fi
+done
 
 deps=()
 for dep in patchelf gcc ccache curl; do
@@ -63,14 +75,6 @@ python3 -m venv "${tmpdir}/venv"
 "${tmpdir}/venv/bin/pip" install --quiet . "nuitka==${NUITKA_VERSION}" zstandard
 
 mkdir -p "dist/${platform}"
-echo -e "from ${module} import run\n\nrun()" >"${tmpdir}/cli.py"
-"${tmpdir}/venv/bin/python" -m nuitka \
-    --onefile \
-    --assume-yes-for-downloads \
-    --remove-output \
-    --output-dir="${tmpdir}/build" \
-    -o "${PWD}/dist/${platform}/${command}" \
-    "${tmpdir}/cli.py"
 
 # smoke test: aws_ssm_juggle exits on import if session-manager-plugin is missing
 if ! command -v session-manager-plugin >/dev/null 2>&1; then
@@ -81,6 +85,15 @@ if ! command -v session-manager-plugin >/dev/null 2>&1; then
         tar --strip-components=4 -C "${tmpdir}/bin" -xf - usr/local/sessionmanagerplugin/bin/session-manager-plugin
     export PATH="${tmpdir}/bin:${PATH}"
 fi
-"dist/${platform}/${command}" --help
-
-cp "dist/${platform}/${command}" "dist/${platform}/${command}_${arch}"
+for command in "$@"; do
+    echo -e "from ${modules[${command}]} import run\n\nrun()" >"${tmpdir}/cli.py"
+    "${tmpdir}/venv/bin/python" -m nuitka \
+        --onefile \
+        --assume-yes-for-downloads \
+        --remove-output \
+        --output-dir="${tmpdir}/build" \
+        -o "${PWD}/dist/${platform}/${command}" \
+        "${tmpdir}/cli.py"
+    "dist/${platform}/${command}" --help
+    cp "dist/${platform}/${command}" "dist/${platform}/${command}_${arch}"
+done

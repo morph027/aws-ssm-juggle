@@ -30,12 +30,14 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - name: Build ec2-juggle binary for ${{ matrix.arch.name }}
+      - name: Build ec2-juggle and ecs-juggle binaries for ${{ matrix.arch.name }}
         run: scripts/build-binary.sh
         env:
           DEBUG: ${{ runner.debug && 1 || 0 }}
       - name: Release assets
         uses: softprops/action-gh-release@v3
         with:
-          files: dist/linux/*/ec2-juggle_*
+          files: |
+            dist/linux/*/ec2-juggle_*
+            dist/linux/*/ecs-juggle_*
           fail_on_unmatched_files: true
