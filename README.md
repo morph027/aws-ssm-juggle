@@ -88,6 +88,16 @@ Currently provides:
 
 See `ec2-juggle --help` for all features.
 
+#### Standalone binary (Linux)
+
+Standalone binaries (built with [nuitka](https://nuitka.net/), no python required) for `x86_64` and `aarch64` are attached to each [release](https://github.com/morph027/aws-ssm-juggle/releases).
+
+Build locally:
+
+```bash
+scripts/build-binary.sh
+```
+
 #### Start session
 
 ```bash
