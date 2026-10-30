@@ -1,5 +1,8 @@
+---
+# yamllint disable rule:line-length
 name: Upload Python Package
 
+# yamllint disable rule:truthy
 on:
   release:
     types:
@@ -9,21 +12,26 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
     environment:
       name: pypi
-    runs-on: ubuntu-latest
+      url: https://pypi.org/p/aws-ssm-juggle
+    permissions:
+      # required for PyPI trusted publishing (OIDC)
+      id-token: write
+      contents: read
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.x'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-    - name: Publish package
-      run: |
-        poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
-        poetry publish --build
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
