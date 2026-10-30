@@ -2,8 +2,28 @@
 
 ## Installation
 
+### pip
+
 ```
 pip install aws-ssm-juggle
+```
+
+### Standalone binary (Linux, ec2-juggle only)
+
+Standalone binaries (built with [nuitka](https://nuitka.net/), no python required) for `x86_64` and `aarch64` are attached to each [release](https://github.com/morph027/aws-ssm-juggle/releases).
+
+Install the latest release to `~/bin`:
+
+```bash
+mkdir -p ~/bin
+curl -fsSL -o ~/bin/ec2-juggle "https://github.com/morph027/aws-ssm-juggle/releases/latest/download/ec2-juggle_$(uname -m)"
+chmod +x ~/bin/ec2-juggle
+```
+
+Build locally:
+
+```bash
+scripts/build-binary.sh
 ```
 
 ## Pre-requisites
@@ -87,16 +107,6 @@ Currently provides:
 ### Usage
 
 See `ec2-juggle --help` for all features.
-
-#### Standalone binary (Linux)
-
-Standalone binaries (built with [nuitka](https://nuitka.net/), no python required) for `x86_64` and `aarch64` are attached to each [release](https://github.com/morph027/aws-ssm-juggle/releases).
-
-Build locally:
-
-```bash
-scripts/build-binary.sh
-```
 
 #### Start session
 
