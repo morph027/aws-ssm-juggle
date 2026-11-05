@@ -8,6 +8,13 @@
 pip install aws-ssm-juggle
 ```
 
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap morph027/aws-ssm-juggle https://github.com/morph027/aws-ssm-juggle
+brew install morph027/aws-ssm-juggle/aws-ssm-juggle
+```
+
 ### Standalone binaries (Linux)
 
 Standalone binaries (built with [nuitka](https://nuitka.net/), no python required) for `x86_64` and `aarch64` are attached to each [release](https://github.com/morph027/aws-ssm-juggle/releases).
